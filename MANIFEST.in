@@ -1,0 +1,8 @@
+include AUTHORS.md CONTRIBUTING.md CHANGELOG.md LICENSE README.md requirements*.txt
+
+graft src
+recursive-include docs *.md *.rst conf.py Makefile
+
+prune docs/md
+
+global-exclude instance/* __pycache__/* *.swp *.py[co] config.cfg config.ini simplenet.cfg simplenet.ini
