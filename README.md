@@ -5,7 +5,7 @@
 A simple neural network in Python
 
 - Free software: MIT
-- Documentation: https://simplenet.readthedocs.org
+- Documentation: https://simplenet-nn.readthedocs.io
 
 ## Features
 
