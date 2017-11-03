@@ -25,6 +25,7 @@ nn = sn.SimpleNet(
     )
 
 keras.backend.set_floatx(dtype)
+print(f'keras epsilon: {keras.backend.epsilon()}')
 
 inputs = Input(shape=(len(data[0]),), dtype=dtype)
 x = Dense(9, activation='sigmoid')(inputs)
