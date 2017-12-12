@@ -167,13 +167,13 @@ def main(import_progress: str = None, save_progress: str = None) -> None:
         output_shape=(None, 10),
         hidden_layer_sizes=(256, 128, 32),
         activation_function=sn.relu,
-        learning_rate=0.01,
+        learning_rate=0.008,
         output_activation=sn.softmax,
         loss_function=sn.cross_entropy,
         seed=42,
         )
 
-    epochs = 100
+    epochs = 5
     batch_size = 200
 
     if import_progress:

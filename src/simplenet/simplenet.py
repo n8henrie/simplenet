@@ -134,9 +134,11 @@ class SimpleNet:
                        [output_shape[1]])
 
         self.weights = [
-                np.random.normal(size=(layer_size, next_layer_size),
-                                 scale=0.01
-                                 ).astype(self.dtype)
+                np.random.uniform(
+                        size=(layer_size, next_layer_size),
+                        low=-((2 / (layer_size + next_layer_size)) ** 0.5),
+                        high=((2 / (layer_size + next_layer_size)) ** 0.5),
+                        ).astype(self.dtype)
                 for layer_size, next_layer_size in
                 zip(layer_sizes, layer_sizes[1:])
             ]
