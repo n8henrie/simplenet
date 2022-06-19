@@ -43,6 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build docker image
-        run: docker build -t simplenet -f Dockerfile.ci
+        run: docker build -t simplenet -f Dockerfile.ci .
       - name: Run docker tests
         run: docker run --rm simplenet
