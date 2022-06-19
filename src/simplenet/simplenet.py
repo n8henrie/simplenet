@@ -415,11 +415,13 @@ class SimpleNet:
             filename: Filename for the saved file.
         """
         pad = len(str(len(self.weights)))
-        biases = {"b{:0{pad}}".format(idx, pad=pad): self.weights[idx]
-                  for idx in range(len(self.weights))}
         weights = {
             "W{:0{pad}}".format(idx, pad=pad): self.weights[idx]
             for idx in range(len(self.weights))
+        }
+        biases = {
+            "b{:0{pad}}".format(idx, pad=pad): self.biases[idx]
+            for idx in range(len(self.biases))
         }
         np.savez(filename, **weights, **biases)
 
