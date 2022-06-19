@@ -1,5 +1,5 @@
 """simplenet :: Simple multilayer perceptron in Python using numpy."""
-__version__ = "v0.1.2"
+__version__ = "v0.1.3"
 __author__ = "Nathan Henrie"
 __email__ = "nate@n8henrie.com"
 
