@@ -4,7 +4,7 @@ PWD = $(shell pwd)
 GREP := $(shell command -v ggrep || command -v grep)
 SED := $(shell command -v gsed || command -v sed)
 
-.PHONY: clean-pyc clean-build docs clean release clean-docs help travis github
+.PHONY: clean-pyc clean-build docs clean release clean-docs help github
 
 help:
 	@$(GREP) --only-matching --word-regexp '^[^[:space:].]*:' Makefile | $(SED) 's|:[:space:]*||'
@@ -82,6 +82,3 @@ update-reqs: requirements.txt
 
 github:
 	hub create
-
-travis:
-	[ -f .travis.yml ] && travis enable || travis init

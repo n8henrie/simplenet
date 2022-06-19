@@ -1,6 +1,7 @@
 # SimpleNet
 
-[![Build Status](https://travis-ci.org/n8henrie/simplenet.svg?branch=master)](https://travis-ci.org/n8henrie/simplenet)
+master: [![master branch build status](https://github.com/n8henrie/simplenet/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/n8henrie/simplenet/actions/workflows/python-package.yml)
+<!-- dev: [![dev branch build status](https://github.com/n8henrie/simplenet/actions/workflows/python-package.yml/badge.svg?branch=dev)](https://github.com/n8henrie/simplenet/actions/workflows/python-package.yml) -->
 
 A simple neural network in Python
 
