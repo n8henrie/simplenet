@@ -1,14 +1,20 @@
 """simplenet.simplenet :: Define SimpleNet class and common functions."""
 
-from typing import Callable, List, Sequence, Tuple, Union  # noqa
+
+from __future__ import annotations
+
+import typing as t
 
 import numpy as np
+import numpy.typing as npt
+
+Number = t.Union[float, int, np.number]
+DataArray = t.Union[
+    t.Sequence[t.Sequence[Number]], t.Sequence[Number], npt.NDArray
+]
 
 
-DataArray = Union[Sequence[int], Sequence[float], np.ndarray]
-
-
-def sigmoid(arr: np.ndarray, der: bool = False) -> np.array:
+def sigmoid(arr: npt.NDArray, der: bool = False) -> npt.NDArray:
     r"""Calculate the sigmoid activation function.
 
     .. math::
@@ -24,13 +30,13 @@ def sigmoid(arr: np.ndarray, der: bool = False) -> np.array:
     Returns:
         Array of outputs from 0 to 1
     """
-    activations = 1 / (1 + np.exp(-arr))
+    activations = 1 / (1 + np.exp(np.negative(arr)))
     if der is True:
         return activations * (1 - activations)
     return activations
 
 
-def softmax(arr: np.ndarray) -> np.ndarray:
+def softmax(arr: npt.NDArray) -> npt.NDArray:
     r"""Calculate the softmax activation function.
 
     This equation uses a "stable softmax" that subtracts the maximum from the
@@ -48,8 +54,11 @@ def softmax(arr: np.ndarray) -> np.ndarray:
     return exps / np.sum(exps, axis=1, keepdims=True)
 
 
-def neg_log_likelihood(y_hat: np.ndarray, targets: np.ndarray,
-                       der: bool = False) -> float:
+def neg_log_likelihood(
+    y_hat: npt.NDArray,
+    targets: npt.NDArray,
+    der: bool = False,
+) -> float | npt.NDArray:
     r"""Calculate the negative log likelihood loss.
 
     I believe this is also called the binary cross-entropy loss function.
@@ -63,14 +72,15 @@ def neg_log_likelihood(y_hat: np.ndarray, targets: np.ndarray,
     m = y_hat.shape[0]
 
     if der is True:
-        return (1 / m) * (y_hat - targets)
+        return (1 / m) * np.subtract(y_hat, targets)
     return -(1 / m) * np.sum(
-            targets * np.log(y_hat) + (1 - targets) * np.log(1 - y_hat)
-            )
+        targets * np.log(y_hat) + np.subtract(1, targets) * np.log(1 - y_hat)
+    )
 
 
-def cross_entropy(y_hat: np.ndarray, targets: np.ndarray,
-                  der: bool = False) -> float:
+def cross_entropy(
+    y_hat: npt.NDArray, targets: npt.NDArray, der: bool = False
+) -> float | npt.NDArray:
     """Calculate the categorical cross entropy loss.
 
     Args:
@@ -82,11 +92,11 @@ def cross_entropy(y_hat: np.ndarray, targets: np.ndarray,
     m = y_hat.shape[0]
 
     if der is True:
-        return (1 / m) * (y_hat - targets)
+        return (1 / m) * (np.subtract(y_hat, targets))
     return -(1 / m) * np.sum(targets * np.log(y_hat))
 
 
-def relu(arr: np.ndarray, der: bool = False) -> np.ndarray:
+def relu(arr: npt.NDArray, der: bool = False) -> npt.NDArray:
     """Calculate the relu activation function.
 
     Args:
@@ -105,15 +115,17 @@ class SimpleNet:
 
     def __init__(
         self,
-        hidden_layer_sizes: Sequence[int],
-        input_shape: Tuple[int, int],
-        output_shape: Tuple[int, int],
-        activation_function: Callable[..., np.ndarray] = sigmoid,
-        output_activation: Callable[..., np.ndarray] = sigmoid,
-        loss_function: Callable[..., float] = neg_log_likelihood,
-        learning_rate: float = 1.,
-        dtype: str = 'float32',
-        seed: int = None,
+        hidden_layer_sizes: t.Sequence[int],
+        input_shape: t.Tuple[int | None, int],
+        output_shape: t.Tuple[int | None, int],
+        activation_function: t.Callable[..., npt.NDArray] = sigmoid,
+        output_activation: t.Callable[..., npt.NDArray] = sigmoid,
+        loss_function: t.Callable[
+            ..., float | npt.NDArray
+        ] = neg_log_likelihood,
+        learning_rate: float = 1.0,
+        dtype: str = "float32",
+        seed: int | None = None,
     ) -> None:
         """Initialize the MPL.
 
@@ -130,31 +142,37 @@ class SimpleNet:
         """
         self.dtype = dtype
         np.random.seed(seed=seed)
-        layer_sizes = ([input_shape[1]] + list(hidden_layer_sizes) +
-                       [output_shape[1]])
+        layer_sizes = (
+            [input_shape[1]] + list(hidden_layer_sizes) + [output_shape[1]]
+        )
 
         self.weights = [
-                np.random.uniform(
-                        size=(layer_size, next_layer_size),
-                        low=-((2 / (layer_size + next_layer_size)) ** 0.5),
-                        high=((2 / (layer_size + next_layer_size)) ** 0.5),
-                        ).astype(self.dtype)
-                for layer_size, next_layer_size in
-                zip(layer_sizes, layer_sizes[1:])
-            ]
+            np.random.uniform(
+                size=(layer_size, next_layer_size),
+                low=-((2 / (layer_size + next_layer_size)) ** 0.5),
+                high=((2 / (layer_size + next_layer_size)) ** 0.5),
+            ).astype(self.dtype)
+            for layer_size, next_layer_size in zip(
+                layer_sizes, layer_sizes[1:]
+            )
+        ]
 
-        self.zs = [np.full((size, 1), np.nan, dtype=self.dtype)
-                   for size in layer_sizes[1:]]
+        self.zs = [
+            np.full((size, 1), np.nan, dtype=self.dtype)
+            for size in layer_sizes[1:]
+        ]
         self.outputs = [z.copy() for z in self.zs]
-        self.biases = [np.zeros((1, layer_size), dtype=self.dtype)
-                       for layer_size in layer_sizes[1:]]
+        self.biases = [
+            np.zeros((1, layer_size), dtype=self.dtype)
+            for layer_size in layer_sizes[1:]
+        ]
 
         self.activation_function = activation_function
         self.learning_rate = learning_rate
         self.output_activation = output_activation
         self.loss_function = loss_function
 
-    def _forward(self, inputs: np.ndarray) -> None:
+    def _forward(self, inputs: npt.NDArray) -> None:
         """Perform the forward pass.
 
         Args:
@@ -164,18 +182,21 @@ class SimpleNet:
         self.outputs[0] = self.activation_function(self.zs[0])
 
         for layer_num in range(1, len(self.weights)):
-            self.zs[layer_num] = np.dot(self.outputs[layer_num - 1],
-                                        self.weights[layer_num]) + \
-                                 self.biases[layer_num]
+            self.zs[layer_num] = (
+                np.dot(self.outputs[layer_num - 1], self.weights[layer_num])
+                + self.biases[layer_num]
+            )
 
             if layer_num < len(self.weights) - 1:
                 self.outputs[layer_num] = self.activation_function(
-                    self.zs[layer_num])
+                    self.zs[layer_num]
+                )
             else:
                 self.outputs[layer_num] = self.output_activation(
-                    self.zs[layer_num])
+                    self.zs[layer_num]
+                )
 
-    def _backprop(self, inputs: np.ndarray, targets: np.ndarray) -> None:
+    def _backprop(self, inputs: npt.NDArray, targets: npt.NDArray) -> None:
         """Calculate gradients and perform the backward pass.
 
         Args:
@@ -186,18 +207,21 @@ class SimpleNet:
 
         self.err = self.loss_function(y_hat=y_hat, targets=targets)
 
-        dws = []  # type: List[np.ndarray]
-        dbs = []  # type: List[np.ndarray]
+        dws: list[np.floating] = []
+        dbs: list[np.floating] = []
         dzs = [self.loss_function(y_hat=y_hat, targets=targets, der=True)]
 
-        for output, weight, z in zip(self.outputs[-2::-1],
-                                     self.weights[::-1],
-                                     self.zs[-2::-1]):
+        for output, weight, z in zip(
+            self.outputs[-2::-1], self.weights[::-1], self.zs[-2::-1]
+        ):
             dws.insert(0, np.dot(output.T, dzs[0]))
             dbs.insert(0, np.sum(dzs[0], axis=0, keepdims=True))
 
-            dzs.insert(0, np.dot(dzs[0], weight.T) *
-                       self.activation_function(z, der=True))
+            dzs.insert(
+                0,
+                np.dot(dzs[0], weight.T)
+                * self.activation_function(z, der=True),
+            )
 
         dws.insert(0, np.dot(inputs.T, dzs[0]))
         dbs.insert(0, np.sum(dzs[0], axis=0, keepdims=True))
@@ -218,7 +242,7 @@ class SimpleNet:
         self._forward(inputs=inputs)
         self._backprop(inputs=inputs, targets=targets)
 
-    def predict(self, inputs: DataArray) -> np.ndarray:
+    def predict(self, inputs: DataArray) -> npt.NDArray:
         """Use existing weights to predict outputs for given inputs.
 
         Note: this method does *not* update weights.
@@ -237,21 +261,21 @@ class SimpleNet:
         outputs[0] = self.activation_function(zs[0])
 
         for layer_num in range(1, len(self.weights)):
-            zs[layer_num] = np.dot(outputs[layer_num - 1],
-                                   self.weights[layer_num]) + \
-                            self.biases[layer_num]
+            zs[layer_num] = (
+                np.dot(outputs[layer_num - 1], self.weights[layer_num])
+                + self.biases[layer_num]
+            )
 
             if layer_num < len(self.weights) - 1:
-                outputs[layer_num] = self.activation_function(
-                    zs[layer_num])
+                outputs[layer_num] = self.activation_function(zs[layer_num])
             else:
-                outputs[layer_num] = self.output_activation(
-                    zs[layer_num])
+                outputs[layer_num] = self.output_activation(zs[layer_num])
 
         return outputs[-1]
 
-    def validate(self, inputs: np.ndarray, targets: np.ndarray,
-                 epsilon: float = 1e-7) -> bool:
+    def validate(
+        self, inputs: DataArray, targets: DataArray, epsilon: float = 1e-7
+    ) -> bool:
         """Use gradient checking to validate backpropagation.
 
         This method uses a naive implementation of gradient checking to try to
@@ -267,35 +291,41 @@ class SimpleNet:
         """
         targets_arr = np.array(targets, dtype=self.dtype)
 
-        weight_grads = []  # type: List[List[List[float]]]
-        bias_grads = []  # type: List[List[List[float]]]
+        weight_grads = []
+        bias_grads = []
 
         backup_weights = [weight.copy() for weight in self.weights]
         backup_biases = [bias.copy() for bias in self.biases]
 
         for layer_num, layer_weights in enumerate(self.weights):
-            layer_weight_grads = []  # type: List[List[float]]
-            layer_bias_grads = [[]]  # type: List[List[float]]
+            layer_weight_grads = []
+            layer_bias_grads: t.List[t.List[float | npt.NDArray]] = [[]]
 
             for neuron_num, neuron_weights in enumerate(layer_weights):
 
                 neuron_weight_grads = []
 
                 for weight_num, weight in enumerate(neuron_weights):
-                    self.weights[layer_num][neuron_num][weight_num] = \
+                    self.weights[layer_num][neuron_num][weight_num] = (
                         weight + epsilon
+                    )
                     outputs = self.predict(inputs)
-                    cost_plus = self.loss_function(y_hat=outputs,
-                                                   targets=targets_arr)
+                    cost_plus = self.loss_function(
+                        y_hat=outputs, targets=targets_arr
+                    )
 
-                    self.weights[layer_num][neuron_num][weight_num] = \
+                    self.weights[layer_num][neuron_num][weight_num] = (
                         weight - epsilon
+                    )
                     outputs = self.predict(inputs)
-                    cost_minus = self.loss_function(y_hat=outputs,
-                                                    targets=targets_arr)
+                    cost_minus = self.loss_function(
+                        y_hat=outputs, targets=targets_arr
+                    )
 
-                    self.weights = [backup_weight.copy()
-                                    for backup_weight in backup_weights]
+                    self.weights = [
+                        backup_weight.copy()
+                        for backup_weight in backup_weights
+                    ]
                     weight_grad = (cost_plus - cost_minus) / (2 * epsilon)
                     neuron_weight_grads.append(weight_grad)
 
@@ -307,18 +337,22 @@ class SimpleNet:
 
                         self.biases[layer_num][0][weight_num] = bias + epsilon
                         outputs = self.predict(inputs)
-                        cost_plus = self.loss_function(y_hat=outputs,
-                                                       targets=targets_arr)
+                        cost_plus = self.loss_function(
+                            y_hat=outputs, targets=targets_arr
+                        )
 
                         self.biases[layer_num][0][weight_num] = bias - epsilon
                         outputs = self.predict(inputs)
-                        cost_minus = self.loss_function(y_hat=outputs,
-                                                        targets=targets_arr)
+                        cost_minus = self.loss_function(
+                            y_hat=outputs, targets=targets_arr
+                        )
 
-                        self.biases = [backup_bias.copy()
-                                       for backup_bias in backup_biases]
-                        neuron_bias_grad = (cost_plus - cost_minus) / \
-                            (2 * epsilon)
+                        self.biases = [
+                            backup_bias.copy() for backup_bias in backup_biases
+                        ]
+                        neuron_bias_grad = (cost_plus - cost_minus) / (
+                            2 * epsilon
+                        )
                         layer_bias_grads[0].append(neuron_bias_grad)
 
                 layer_weight_grads.append(neuron_weight_grads)
@@ -331,39 +365,44 @@ class SimpleNet:
         weight_deltas = []
         bias_deltas = []
 
-        for weight_before, weight_after, bias_before, bias_after in \
-                zip(backup_weights, self.weights, backup_biases, self.biases):
+        for weight_before, weight_after, bias_before, bias_after in zip(
+            backup_weights, self.weights, backup_biases, self.biases
+        ):
             weight_deltas.append(
-                    (weight_before - weight_after) / self.learning_rate)
+                (weight_before - weight_after) / self.learning_rate
+            )
             bias_deltas.append((bias_before - bias_after) / self.learning_rate)
 
-        self.weights = [backup_weight.copy()
-                        for backup_weight in backup_weights]
+        self.weights = [
+            backup_weight.copy() for backup_weight in backup_weights
+        ]
         self.biases = [backup_bias.copy() for backup_bias in backup_biases]
 
         pairs = {
-                "weight": (weight_grads, weight_deltas),
-                "bias": (bias_grads, bias_deltas),
-                }
+            "weight": (weight_grads, weight_deltas),
+            "bias": (bias_grads, bias_deltas),
+        }
+        count = len(pairs)
         for k, pair in pairs.items():
             for idx, (calculated, analytic) in enumerate(zip(*pair)):
-                if not np.allclose(calculated, analytic):
+                if not np.allclose(np.array(calculated), analytic):
                     width = 25
-                    print("Wrong {} gradient suspected around layer {}."
-                          .format(k, idx))
-                    header = ("{'calculated':^{width}}"
-                              "{'analytic':^{width}}"
-                              "{'diff':^{width}}")
+                    print(f"Wrong {k} gradient suspected around layer {idx}.")
+                    header = (
+                        "{'calculated':^{width}}"
+                        "{'analytic':^{width}}"
+                        "{'diff':^{width}}"
+                    )
                     print(header.format(width=width))
 
-                    for c, a in zip(np.array(calculated).reshape(-1),
-                                    analytic.reshape(-1)):
-                        print("{:^{width}}{a:^{width}}{c-a:^{width}}"
-                              .format(c, a, c-a, width=width))
+                    for c, a in zip(
+                        np.array(calculated).reshape(-1), analytic.reshape(-1)
+                    ):
+                        print(f"{c:^{width}}{a:^{width}}{c-a:^{width}}")
 
                     return False
 
-        print("All {} gradients check out.".format(k))
+        print(f"All {count} gradients check out.")
         return True
 
     def export_model(self, filename: str) -> None:
@@ -376,10 +415,14 @@ class SimpleNet:
             filename: Filename for the saved file.
         """
         pad = len(str(len(self.weights)))
-        weights = {"W{:0{pad}}".format(idx, pad=pad): self.weights[idx]
-                   for idx in range(len(self.weights))}
-        biases = {"b{:0{pad}}".format(idx, pad=pad): self.weights[idx]
-                  for idx in range(len(self.weights))}
+        weights = {
+            "W{:0{pad}}".format(idx, pad=pad): self.weights[idx]
+            for idx in range(len(self.weights))
+        }
+        biases = {
+            "b{:0{pad}}".format(idx, pad=pad): self.biases[idx]
+            for idx in range(len(self.biases))
+        }
         np.savez(filename, **weights, **biases)
 
     def import_model(self, filename: str) -> None:
@@ -389,7 +432,9 @@ class SimpleNet:
             filename: Name of file from which to import
         """
         model = np.load(filename)
-        self.weights = [model[k] for k in sorted(model.keys())
-                        if k.startswith("W")]
-        self.biases = [model[k] for k in sorted(model.keys())
-                       if k.startswith("b")]
+        self.weights = [
+            model[k] for k in sorted(model.keys()) if k.startswith("W")
+        ]
+        self.biases = [
+            model[k] for k in sorted(model.keys()) if k.startswith("b")
+        ]
