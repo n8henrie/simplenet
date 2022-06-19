@@ -23,7 +23,7 @@ features.
 
 ## Dependencies
 
-- Python >= 3.5 (will likely require 3.6 eventually, if Pythonista updates)
+- Python >= 3.6
 - numpy
 
 ## Quickstart
