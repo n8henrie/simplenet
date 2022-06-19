@@ -36,3 +36,12 @@ jobs:
       - if: "matrix.python-version == '3.10'"
         name: Lint
         run: python -m tox -e lint
+
+  docker:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build docker image
+        run: docker build -t simplenet -f Dockerfile.ci
+      - name: Run docker tests
+        run: docker run --rm simplenet
