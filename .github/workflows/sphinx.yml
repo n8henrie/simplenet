@@ -12,7 +12,7 @@ jobs:
         run: make docs
       - uses: actions/upload-pages-artifact@v0.1.0
         with:
-          name: docs/_build/html
+          path: docs/_build/html
   deploy:
     needs: build
     runs-on: ubuntu-latest
