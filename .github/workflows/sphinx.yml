@@ -30,4 +30,4 @@ jobs:
         uses: actions/deploy-pages@v1
         if: github.ref == 'refs/heads/master'
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
