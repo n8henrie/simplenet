@@ -1,4 +1,9 @@
 ---
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 name: Sphinx build
 
 on: push
@@ -16,8 +21,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy docs
+        id: deployment
         uses: actions/deploy-pages@v1
         if: github.ref == 'refs/heads/master'
         with:
