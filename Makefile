@@ -49,10 +49,11 @@ clean-docs:
 	rm -f docs/modules.rst
 
 docs: clean-docs .venv
-	.venv/bin/python -m pip install -e .[dev]
-	source .venv/bin/activate && sphinx-apidoc -o docs/ src/simplenet
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
+	source .venv/bin/activate \
+		&& python -m pip install -e .[dev] \
+		&& sphinx-apidoc -o docs/ src/simplenet \
+		&& $(MAKE) -C docs clean \
+		&& $(MAKE) -C docs html
 	-open docs/_build/html/index.html
 
 release: dist
