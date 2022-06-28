@@ -36,7 +36,7 @@ features.
 
 1. Clone the repo: `git clone https://github.com/n8henrie/simplenet && cd
    simplenet`
-1. Make a virtualenv: `python3 -m venv venv`
+1. Make a virtualenv: `python3 -m venv .venv`
 1. `source venv/bin/activate`
 1. `pip install -e .[dev]`
 

@@ -31,7 +31,8 @@ clean-test:
 lint:
 	flake8 src/simplenet tests
 
-test:
+test: .venv
+	.venv/bin/python -m pip install -e .[test]
 	py.test tests
 
 test-all:
@@ -47,10 +48,12 @@ clean-docs:
 	rm -f docs/simplenet*.rst
 	rm -f docs/modules.rst
 
-docs: clean-docs
-	source venv/bin/activate && sphinx-apidoc -o docs/ src/simplenet
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs html
+docs: clean-docs .venv
+	source .venv/bin/activate \
+		&& python -m pip install -e .[dev] \
+		&& sphinx-apidoc -o docs/ src/simplenet \
+		&& $(MAKE) -C docs clean \
+		&& $(MAKE) -C docs html
 	-open docs/_build/html/index.html
 
 release: dist
@@ -62,9 +65,10 @@ dist: clean docs
 	$(PYTHON) setup.py bdist_wheel
 	ls -l dist
 
-venv:
-	$(PYTHON) -m venv venv
-	venv/bin/pip install --upgrade pip wheel setuptools
+.venv:
+	$(PYTHON) -m venv .venv
+	.venv/bin/python -m pip install --upgrade pip
+	.venv/bin/python -m pip install -e .
 
 update-reqs: requirements.txt
 	@$(GREP) --invert-match --no-filename '^#' requirements*.txt | \
