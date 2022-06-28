@@ -6,7 +6,7 @@ master: [![master branch build status](https://github.com/n8henrie/simplenet/act
 A simple neural network in Python
 
 - Free software: MIT
-- Documentation: https://simplenet-nn.readthedocs.io
+- Documentation: <https://n8henrie.com/simplenet>
 
 ## Features
 
