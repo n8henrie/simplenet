@@ -4,10 +4,10 @@ PWD = $(shell pwd)
 GREP := $(shell command -v ggrep || command -v grep)
 SED := $(shell command -v gsed || command -v sed)
 
-.PHONY: clean-pyc clean-build docs clean release clean-docs help github
+.PHONY: clean-pyc clean-build docs clean release clean-docs help
 
 help:
-	@$(GREP) --only-matching --word-regexp '^[^[:space:].]*:' Makefile | $(SED) 's|:[:space:]*||'
+	@awk '/^[^ ]*:/ { gsub(":.*", ""); print }' Makefile
 
 clean: clean-build clean-pyc clean-test
 
@@ -29,7 +29,7 @@ clean-test:
 	rm -fr htmlcov/
 
 lint:
-	flake8 src/simplenet tests
+	tox -e lint
 
 test: .venv
 	.venv/bin/python -m pip install -e .[test]
@@ -60,7 +60,6 @@ release: dist
 	twine upload dist/*
 
 dist: clean docs
-	$(PYTHON) setup.py --long-description | rst2html.py --halt=2
 	$(PYTHON) setup.py sdist
 	$(PYTHON) setup.py bdist_wheel
 	ls -l dist
@@ -73,16 +72,13 @@ dist: clean docs
 update-reqs: requirements.txt
 	@$(GREP) --invert-match --no-filename '^#' requirements*.txt | \
 		$(SED) 's|==.*$$||g' | \
-		xargs venv/bin/python -m pip install --upgrade; \
+		xargs ./.venv/bin/python -m pip install --upgrade; \
 	for reqfile in requirements*.txt; do \
 		echo "Updating $${reqfile}..."; \
-		venv/bin/python -c 'print("\n{:#^80}".format("  Updated reqs below  "))' >> "$${reqfile}"; \
-		for lib in $$(venv/bin/pip freeze --all --isolated --quiet | $(GREP) '=='); do \
+		./.venv/bin/python -c 'print("\n{:#^80}".format("  Updated reqs below  "))' >> "$${reqfile}"; \
+		for lib in $$(./.venv/bin/pip freeze --all --isolated --quiet | $(GREP) '=='); do \
 			if $(GREP) "^$${lib%%=*}==" "$${reqfile}" >/dev/null; then \
 				echo "$${lib}" >> "$${reqfile}"; \
 			fi; \
 		done; \
 	done;
-
-github:
-	hub create
